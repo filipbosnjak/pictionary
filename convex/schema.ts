@@ -39,4 +39,11 @@ export default defineSchema({
     timestamp: v.number(),
     isCorrect: v.boolean(),
   }),
+  messages: defineTable({
+    roomId: v.id("rooms"),
+    playerId: v.string(),
+    playerName: v.string(),
+    content: v.string(),
+    timestamp: v.number(),
+  }).index("by_room", ["roomId"]),
 }); 
