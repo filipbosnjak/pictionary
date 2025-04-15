@@ -31,21 +31,11 @@ export function useRoomCleanup(roomId: Id<"rooms">, playerId: string) {
     // Handle tab/browser closing
     window.addEventListener('beforeunload', handleUnload);
     window.addEventListener('unload', handleUnload);
-    
-    // Handle visibility change (tab switching/minimizing)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        cleanup();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Cleanup function for component unmounting
     return () => {
       window.removeEventListener('beforeunload', handleUnload);
       window.removeEventListener('unload', handleUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      cleanup();
     };
   }, [roomId, playerId, removePlayer]);
 } 
