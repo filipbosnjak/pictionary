@@ -27,7 +27,7 @@ export default defineSchema({
       color: v.string(),
       width: v.number(),
     })),
-  }),
+  }).index("by_room", ["roomId"]),
   guesses: defineTable({
     roomId: v.id("rooms"),
     playerId: v.string(),

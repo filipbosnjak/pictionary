@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 export const submitGuess = mutation({
   args: {
@@ -31,6 +32,12 @@ export const submitGuess = mutation({
           : player
       );
       await ctx.db.patch(roomId, { players: updatedPlayers });
+
+      // Wait for 2 seconds to show celebration
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Start next round
+      await ctx.scheduler.runAfter(0, internal.rooms.nextRound, { roomId });
     }
 
     return isCorrect;
@@ -42,7 +49,7 @@ export const getGuesses = query({
   handler: async (ctx, { roomId }) => {
     return await ctx.db
       .query("guesses")
-      .filter(q => q.eq(q.field("roomId"), roomId))
+      .filter((q) => q.eq(q.field("roomId"), roomId))
       .order("desc")
       .take(50);
   },

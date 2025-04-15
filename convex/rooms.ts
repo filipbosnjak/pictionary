@@ -1,6 +1,13 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+
+const WORDS = [
+  "cat", "dog", "house", "tree", "car", "book", "phone", "computer",
+  "pizza", "beach", "sun", "moon", "star", "flower", "bird", "fish",
+  "airplane", "boat", "train", "bicycle", "chair", "table", "clock",
+  "pencil", "shoe", "hat", "glasses", "umbrella", "butterfly", "rainbow"
+];
 
 export const createRoom = mutation({
   args: {
@@ -168,5 +175,45 @@ export const updatePresence = mutation({
     await ctx.db.patch(roomId, {
       players: updatedPlayers,
     });
+  },
+});
+
+export const nextRound = internalMutation({
+  args: {
+    roomId: v.id("rooms"),
+  },
+  handler: async (ctx, { roomId }) => {
+    const room = await ctx.db.get(roomId);
+    if (!room) throw new Error("Room not found");
+
+    // Get current drawer index
+    const currentDrawerIndex = room.players.findIndex(p => p.id === room.currentDrawer);
+    
+    // Select next drawer (cycle through players)
+    const nextDrawerIndex = (currentDrawerIndex + 1) % room.players.length;
+    const nextDrawer = room.players[nextDrawerIndex].id;
+    
+    // Select random word
+    const randomWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+
+    // Update room with new drawer and word
+    await ctx.db.patch(roomId, {
+      currentDrawer: nextDrawer,
+      currentWord: randomWord,
+    });
+
+    // Clear the drawing
+    const drawing = await ctx.db
+      .query("drawings")
+      .withIndex("by_room", (q) => q.eq("roomId", roomId))
+      .first();
+    
+    if (drawing) {
+      await ctx.db.patch(drawing._id, {
+        paths: [],
+      });
+    }
+
+    return { nextDrawer, word: randomWord };
   },
 }); 
