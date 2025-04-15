@@ -9,6 +9,7 @@ import PlayersList from "@/components/PlayersList";
 import GuessInput from "@/components/GuessInput";
 import GameChat from "@/components/GameChat";
 import RoomIdDisplay from "@/components/RoomIdDisplay";
+import StartGameButton from "@/components/StartGameButton";
 import { useRoomCleanup } from "@/lib/hooks/useRoomCleanup";
 import { usePresence } from "@/lib/hooks/usePresence";
 import { useEffect, useState } from "react";
@@ -50,6 +51,13 @@ export default function RoomPage() {
     isOnline: (player.lastSeen ?? 0) > onlineThreshold,
   }));
 
+  // Check if current player is the room creator (first player)
+  const isCreator = playerId === room.players[0]?.id;
+
+  // Show word only to the drawer
+  const isDrawer = room.currentDrawer === playerId;
+  const currentWord = isDrawer ? room.currentWord : null;
+
   return (
     <main className="container mx-auto p-4 min-h-screen">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -58,14 +66,25 @@ export default function RoomPage() {
             <h1 className="text-2xl font-bold">{room.name}</h1>
             <RoomIdDisplay roomId={room.customId} />
           </div>
-          <DrawingCanvas
-            roomId={roomId}
-            isDrawer={room.currentDrawer === playerId}
-          />
-          <GuessInput roomId={roomId} />
+          {currentWord && (
+            <div className="bg-blue-100 p-4 rounded-lg text-blue-800 text-center">
+              Your word to draw: <strong>{currentWord}</strong>
+            </div>
+          )}
+          <DrawingCanvas roomId={roomId} isDrawer={isDrawer} />
+          {!isDrawer && room.status === "playing" && (
+            <GuessInput roomId={roomId} />
+          )}
         </div>
         <div className="space-y-4">
           <PlayersList players={players} />
+          {room.status === "waiting" && (
+            <StartGameButton
+              roomId={roomId}
+              players={players}
+              isCreator={isCreator}
+            />
+          )}
           <GameChat roomId={roomId} />
         </div>
       </div>

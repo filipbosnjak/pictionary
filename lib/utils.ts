@@ -28,3 +28,23 @@ export function formatRoomId(id: string): string {
   
   return clean;
 }
+
+// Array of visually distinct colors for users
+const userColors = [
+  '#FF6B6B', // coral red
+  '#4ECDC4', // turquoise
+  '#45B7D1', // sky blue
+  '#96CEB4', // sage
+  '#FFEEAD', // cream
+  '#D4A5A5', // dusty rose
+  '#9B59B6', // purple
+  '#3498DB', // blue
+  '#E67E22', // orange
+  '#27AE60', // green
+];
+
+export function getUserColor(userId: string): string {
+  // Use the sum of character codes to get a consistent index
+  const sum = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return userColors[sum % userColors.length];
+}
