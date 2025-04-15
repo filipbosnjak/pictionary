@@ -44,6 +44,10 @@ export default function JoinRoom() {
         playerName,
       });
       console.log("Join result:", result);
+
+      // Store player name in localStorage
+      localStorage.setItem(`playerName_${result.internalId}`, playerName);
+
       router.push(`/room/${result.internalId}`);
     } catch (err) {
       console.error("Join error:", err);

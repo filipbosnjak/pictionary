@@ -1,6 +1,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { useEffect, useRef } from "react";
 
 interface GameChatProps {
   roomId: Id<"rooms">;
@@ -8,6 +9,14 @@ interface GameChatProps {
 
 export default function GameChat({ roomId }: GameChatProps) {
   const guesses = useQuery(api.guesses.getGuesses, { roomId });
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to the latest message
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [guesses]);
 
   if (!guesses) {
     return <div>Loading...</div>;
@@ -28,6 +37,7 @@ export default function GameChat({ roomId }: GameChatProps) {
             <span>{guess.guess}</span>
           </div>
         ))}
+        <div ref={chatEndRef} />
       </div>
     </div>
   );

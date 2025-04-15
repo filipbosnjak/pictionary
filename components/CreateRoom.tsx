@@ -33,6 +33,9 @@ export default function CreateRoom() {
         customId,
       });
 
+      // Store player name in localStorage
+      localStorage.setItem(`playerName_${result.internalId}`, playerName);
+
       router.push(`/room/${result.internalId}`);
     } catch (error) {
       console.error("Failed to create room:", error);
