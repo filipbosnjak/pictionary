@@ -12,6 +12,7 @@ export default defineSchema({
       id: v.string(),
       name: v.string(),
       score: v.number(),
+      lastSeen: v.optional(v.number()),
     })),
     status: v.string(), // "waiting" | "playing" | "finished"
     createdAt: v.number(),

@@ -147,4 +147,26 @@ export const removePlayerFromRoom = mutation({
 
     return { deleted: false };
   },
+});
+
+export const updatePresence = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    playerId: v.string(),
+  },
+  handler: async (ctx, { roomId, playerId }) => {
+    const room = await ctx.db.get(roomId);
+    if (!room) return;
+
+    const now = Date.now();
+    const updatedPlayers = room.players.map(player => 
+      player.id === playerId 
+        ? { ...player, lastSeen: now }
+        : player
+    );
+
+    await ctx.db.patch(roomId, {
+      players: updatedPlayers,
+    });
+  },
 }); 

@@ -10,6 +10,7 @@ import GuessInput from "@/components/GuessInput";
 import GameChat from "@/components/GameChat";
 import RoomIdDisplay from "@/components/RoomIdDisplay";
 import { useRoomCleanup } from "@/lib/hooks/useRoomCleanup";
+import { usePresence } from "@/lib/hooks/usePresence";
 import { useEffect, useState } from "react";
 
 export default function RoomPage() {
@@ -35,9 +36,19 @@ export default function RoomPage() {
   // Use the room cleanup hook to handle tab closing
   useRoomCleanup(roomId, playerId);
 
+  // Use the presence hook to update player's online status
+  usePresence(roomId, playerId);
+
   if (!room) {
     return <div>Loading...</div>;
   }
+
+  // Filter out players who haven't been seen in the last 10 seconds
+  const onlineThreshold = Date.now() - 10000;
+  const players = room.players.map((player) => ({
+    ...player,
+    isOnline: (player.lastSeen ?? 0) > onlineThreshold,
+  }));
 
   return (
     <main className="container mx-auto p-4 min-h-screen">
@@ -54,7 +65,7 @@ export default function RoomPage() {
           <GuessInput roomId={roomId} />
         </div>
         <div className="space-y-4">
-          <PlayersList players={room.players} />
+          <PlayersList players={players} />
           <GameChat roomId={roomId} />
         </div>
       </div>
