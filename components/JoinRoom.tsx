@@ -12,30 +12,44 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { formatRoomId } from "@/lib/utils";
 
 export default function JoinRoom() {
   const router = useRouter();
-  const joinRoom = useMutation(api.rooms.joinRoom);
   const [roomId, setRoomId] = useState("");
   const [playerName, setPlayerName] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const joinRoom = useMutation(api.rooms.joinRoom);
+
+  const handleRoomIdChange = (value: string) => {
+    const formatted = value.toUpperCase();
+    console.log("Raw input:", value);
+    console.log("Formatted input:", formatted);
+    setRoomId(formatted);
+    setError(null);
+  };
 
   const handleJoinRoom = async () => {
     if (!roomId || !playerName) return;
-    setError("");
+
+    setIsLoading(true);
+    setError(null);
 
     try {
+      console.log("Attempting to join with roomId:", roomId);
       const result = await joinRoom({
-        roomId,
+        customId: roomId,
         playerName,
       });
-
-      if (result) {
-        router.push(`/room/${roomId}`);
-      }
-    } catch (error) {
-      console.error("Failed to join room:", error);
-      setError("Invalid room ID or room is full");
+      console.log("Join result:", result);
+      router.push(`/room/${result.internalId}`);
+    } catch (err) {
+      console.error("Join error:", err);
+      setError(err instanceof Error ? err.message : "Failed to join room");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -53,8 +67,9 @@ export default function JoinRoom() {
           <Input
             id="roomId"
             value={roomId}
-            onChange={(e) => setRoomId(e.target.value)}
-            placeholder="Enter room ID"
+            onChange={(e) => handleRoomIdChange(e.target.value)}
+            placeholder="Enter room ID (e.g., 1A4B-4HN1)"
+            maxLength={9} // 8 chars + 1 hyphen
           />
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
@@ -70,9 +85,9 @@ export default function JoinRoom() {
         <Button
           className="w-full"
           onClick={handleJoinRoom}
-          disabled={!roomId || !playerName}
+          disabled={!roomId || !playerName || isLoading}
         >
-          Join Room
+          {isLoading ? "Joining..." : "Join Room"}
         </Button>
       </CardContent>
     </Card>

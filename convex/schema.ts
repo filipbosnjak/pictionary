@@ -3,6 +3,7 @@ import { v } from "convex/values";
 
 export default defineSchema({
   rooms: defineTable({
+    customId: v.optional(v.string()),
     name: v.string(),
     maxPlayers: v.number(),
     currentWord: v.optional(v.string()),
@@ -14,7 +15,7 @@ export default defineSchema({
     })),
     status: v.string(), // "waiting" | "playing" | "finished"
     createdAt: v.number(),
-  }),
+  }).index("by_custom_id", ["customId"]),
   drawings: defineTable({
     roomId: v.id("rooms"),
     paths: v.array(v.object({

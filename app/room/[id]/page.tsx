@@ -9,12 +9,31 @@ import PlayersList from "@/components/PlayersList";
 import GuessInput from "@/components/GuessInput";
 import GameChat from "@/components/GameChat";
 import RoomIdDisplay from "@/components/RoomIdDisplay";
+import { useRoomCleanup } from "@/lib/hooks/useRoomCleanup";
+import { useEffect, useState } from "react";
 
 export default function RoomPage() {
   const params = useParams();
   const roomId = params.id as Id<"rooms">;
   const room = useQuery(api.rooms.getRoom, { roomId });
   const drawing = useQuery(api.drawings.getDrawing, { roomId });
+  const [playerId, setPlayerId] = useState<string>("");
+
+  // Get the player ID from localStorage or find it in the room data
+  useEffect(() => {
+    const storedPlayerId = localStorage.getItem(`player_${roomId}`);
+    if (storedPlayerId && room?.players.some((p) => p.id === storedPlayerId)) {
+      setPlayerId(storedPlayerId);
+    } else if (room?.players.length) {
+      // If no stored ID or stored ID not found in room, take the last joined player
+      const newPlayerId = room.players[room.players.length - 1].id;
+      localStorage.setItem(`player_${roomId}`, newPlayerId);
+      setPlayerId(newPlayerId);
+    }
+  }, [room, roomId]);
+
+  // Use the room cleanup hook to handle tab closing
+  useRoomCleanup(roomId, playerId);
 
   if (!room) {
     return <div>Loading...</div>;
@@ -26,11 +45,11 @@ export default function RoomPage() {
         <div className="lg:col-span-2 space-y-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">{room.name}</h1>
-            <RoomIdDisplay roomId={roomId} />
+            <RoomIdDisplay roomId={room.customId} />
           </div>
           <DrawingCanvas
             roomId={roomId}
-            isDrawer={room.currentDrawer === roomId}
+            isDrawer={room.currentDrawer === playerId}
           />
           <GuessInput roomId={roomId} />
         </div>

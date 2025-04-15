@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { generateRoomId } from "@/lib/utils";
 
 export default function CreateRoom() {
   const router = useRouter();
@@ -24,13 +25,15 @@ export default function CreateRoom() {
     if (!roomName || !playerName || !maxPlayers) return;
 
     try {
-      const roomId = await createRoom({
+      const customId = generateRoomId();
+      const result = await createRoom({
         name: roomName,
         maxPlayers: parseInt(maxPlayers),
         creatorName: playerName,
+        customId,
       });
 
-      router.push(`/room/${roomId}`);
+      router.push(`/room/${result.internalId}`);
     } catch (error) {
       console.error("Failed to create room:", error);
     }
