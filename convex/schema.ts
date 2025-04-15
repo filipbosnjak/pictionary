@@ -8,6 +8,9 @@ export default defineSchema({
     maxPlayers: v.number(),
     currentWord: v.optional(v.string()),
     currentDrawer: v.optional(v.string()),
+    nextDrawer: v.optional(v.string()),
+    nextWord: v.optional(v.string()),
+    transitionStartTime: v.optional(v.number()),
     players: v.array(v.object({
       id: v.string(),
       name: v.string(),

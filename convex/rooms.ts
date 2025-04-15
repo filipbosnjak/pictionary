@@ -185,21 +185,15 @@ export const nextRound = internalMutation({
   handler: async (ctx, { roomId }) => {
     const room = await ctx.db.get(roomId);
     if (!room) throw new Error("Room not found");
-
-    // Get current drawer index
-    const currentDrawerIndex = room.players.findIndex(p => p.id === room.currentDrawer);
-    
-    // Select next drawer (cycle through players)
-    const nextDrawerIndex = (currentDrawerIndex + 1) % room.players.length;
-    const nextDrawer = room.players[nextDrawerIndex].id;
-    
-    // Select random word
-    const randomWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+    if (!room.nextDrawer || !room.nextWord) throw new Error("Next round data not found");
 
     // Update room with new drawer and word
     await ctx.db.patch(roomId, {
-      currentDrawer: nextDrawer,
-      currentWord: randomWord,
+      currentDrawer: room.nextDrawer,
+      currentWord: room.nextWord,
+      nextDrawer: undefined,
+      nextWord: undefined,
+      transitionStartTime: undefined,
       status: "playing",
     });
 
@@ -215,6 +209,6 @@ export const nextRound = internalMutation({
       });
     }
 
-    return { nextDrawer, word: randomWord };
+    return { nextDrawer: room.nextDrawer, word: room.nextWord };
   },
 }); 

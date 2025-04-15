@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import DrawingCanvas from "@/components/DrawingCanvas";
@@ -23,6 +23,21 @@ export default function RoomPage() {
   const [showCelebration, setShowCelebration] = useState(false);
   const guesses = useQuery(api.guesses.getGuesses, { roomId }) || [];
   const latestGuess = guesses[0];
+  const removePlayer = useMutation(api.rooms.removePlayerFromRoom);
+  const [countdown, setCountdown] = useState(5);
+
+  // Clean up player data when component unmounts
+  useEffect(() => {
+    return () => {
+      if (playerId && roomId) {
+        // Remove player from room
+        removePlayer({ roomId, playerId });
+        // Clear local storage
+        localStorage.removeItem(`player_${roomId}`);
+        localStorage.removeItem(`playerName_${roomId}`);
+      }
+    };
+  }, [playerId, roomId, removePlayer]);
 
   // Show celebration when a correct guess is made
   useEffect(() => {
@@ -76,6 +91,27 @@ export default function RoomPage() {
   // Use the presence hook to update player's online status
   usePresence(roomId, playerId);
 
+  // Handle countdown during transition
+  useEffect(() => {
+    if (!room || room.status !== "transitioning") {
+      setCountdown(5);
+      return;
+    }
+
+    // Set initial countdown
+    const startTime = room.transitionStartTime ?? Date.now();
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const initial = Math.max(0, 5 - elapsed);
+    setCountdown(initial);
+
+    // Update every second
+    const timer = setInterval(() => {
+      setCountdown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [room?.status, room?.transitionStartTime]);
+
   if (!room) {
     return <div>Loading...</div>;
   }
@@ -120,12 +156,33 @@ export default function RoomPage() {
     }
 
     if (room.status === "transitioning") {
+      const isNextDrawer = playerId === room.nextDrawer;
+      const nextDrawerName = room.players.find(
+        (p) => p.id === room.nextDrawer
+      )?.name;
+
       return (
         <div className="space-y-4">
-          <div className="bg-green-100 p-4 rounded-lg text-green-800 text-center animate-bounce">
-            🎉 <strong>{latestGuess?.playerName}</strong> guessed the word
-            correctly! 🎉
-            <div className="mt-2 text-sm">Next round starting soon...</div>
+          <div className="bg-green-100 p-4 rounded-lg text-green-800 text-center">
+            <div className="text-xl animate-bounce mb-2">
+              🎉 <strong>{latestGuess?.playerName}</strong> guessed the word
+              correctly! 🎉
+            </div>
+            <div className="text-3xl font-bold mb-2">{countdown} ⏰</div>
+            {isNextDrawer ? (
+              <div className="space-y-2">
+                <div className="text-lg">
+                  🎨 Get ready! You're drawing next! 🎨
+                </div>
+                <div className="bg-blue-100 p-2 rounded text-blue-800">
+                  Your word will be: <strong>{room.nextWord}</strong> ✏️
+                </div>
+              </div>
+            ) : (
+              <div className="text-lg">
+                Next up: <strong>{nextDrawerName}</strong> will be drawing! 🎨
+              </div>
+            )}
           </div>
           <DrawingCanvas roomId={roomId} isDrawer={false} />
         </div>

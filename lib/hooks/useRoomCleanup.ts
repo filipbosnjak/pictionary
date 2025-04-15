@@ -32,10 +32,29 @@ export function useRoomCleanup(roomId: Id<"rooms">, playerId: string) {
     window.addEventListener('beforeunload', handleUnload);
     window.addEventListener('unload', handleUnload);
 
+    // Handle navigation using the History API
+    const handlePopState = () => {
+      cleanup();
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    // Handle clicks on links and navigation
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest('a');
+      if (link && link.href && !link.href.startsWith('#')) {
+        cleanup();
+      }
+    };
+    document.addEventListener('click', handleClick);
+
     // Cleanup function for component unmounting
     return () => {
+      cleanup(); // Clean up when component unmounts
       window.removeEventListener('beforeunload', handleUnload);
       window.removeEventListener('unload', handleUnload);
+      window.removeEventListener('popstate', handlePopState);
+      document.removeEventListener('click', handleClick);
     };
   }, [roomId, playerId, removePlayer]);
 } 

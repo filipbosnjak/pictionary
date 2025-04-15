@@ -2,6 +2,15 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 
+const WORDS = [
+  "cat", "dog", "house", "tree", "car", "book", "phone", "computer",
+  "pizza", "beach", "sun", "moon", "star", "flower", "bird", "fish",
+  "airplane", "boat", "train", "bicycle", "chair", "table", "clock",
+  "pencil", "shoe", "hat", "glasses", "umbrella", "butterfly", "rainbow"
+];
+
+const TRANSITION_DURATION = 5000; // 5 seconds countdown
+
 export const submitGuess = mutation({
   args: {
     roomId: v.id("rooms"),
@@ -33,14 +42,25 @@ export const submitGuess = mutation({
           : player
       );
 
-      // Update room with new scores and mark it as transitioning
+      // Get current drawer index and select next drawer
+      const currentDrawerIndex = room.players.findIndex(p => p.id === room.currentDrawer);
+      const nextDrawerIndex = (currentDrawerIndex + 1) % room.players.length;
+      const nextDrawer = room.players[nextDrawerIndex].id;
+
+      // Select random word
+      const nextWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+
+      // Update room with new scores and transition data
       await ctx.db.patch(roomId, { 
         players: updatedPlayers,
-        status: "transitioning" // Add a transitioning state
+        status: "transitioning",
+        nextDrawer,
+        nextWord,
+        transitionStartTime: Date.now()
       });
 
-      // Schedule the next round after a delay
-      await ctx.scheduler.runAfter(2000, internal.rooms.nextRound, { roomId });
+      // Schedule the next round after the transition duration
+      await ctx.scheduler.runAfter(TRANSITION_DURATION, internal.rooms.nextRound, { roomId });
     }
 
     return isCorrect;
