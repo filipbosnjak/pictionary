@@ -109,6 +109,47 @@ export default function RoomPage() {
     roomStatus: room.status,
   });
 
+  const renderGameContent = () => {
+    if (room.status === "waiting") {
+      return (
+        <div className="bg-yellow-100 p-4 rounded-lg text-yellow-800 text-center">
+          Waiting for the game to start... Chat with other players while you
+          wait!
+        </div>
+      );
+    }
+
+    if (room.status === "transitioning") {
+      return (
+        <div className="space-y-4">
+          <div className="bg-green-100 p-4 rounded-lg text-green-800 text-center animate-bounce">
+            🎉 <strong>{latestGuess?.playerName}</strong> guessed the word
+            correctly! 🎉
+            <div className="mt-2 text-sm">Next round starting soon...</div>
+          </div>
+          <DrawingCanvas roomId={roomId} isDrawer={false} />
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {currentWord && (
+          <div className="bg-blue-100 p-4 rounded-lg text-blue-800 text-center">
+            Your word to draw: <strong>{currentWord}</strong>
+          </div>
+        )}
+        {latestGuess?.isCorrect && (
+          <div className="bg-green-100 p-4 rounded-lg text-green-800 text-center animate-bounce">
+            🎉 <strong>{latestGuess.playerName}</strong> guessed the word
+            correctly! 🎉
+          </div>
+        )}
+        <DrawingCanvas roomId={roomId} isDrawer={isDrawer} />
+      </>
+    );
+  };
+
   return (
     <main className="container mx-auto p-4 min-h-screen">
       <Celebration
@@ -121,27 +162,7 @@ export default function RoomPage() {
             <h1 className="text-2xl font-bold">{room.name}</h1>
             <RoomIdDisplay roomId={room.customId} />
           </div>
-          {room.status === "waiting" ? (
-            <div className="bg-yellow-100 p-4 rounded-lg text-yellow-800 text-center">
-              Waiting for the game to start... Chat with other players while you
-              wait!
-            </div>
-          ) : (
-            <>
-              {currentWord && (
-                <div className="bg-blue-100 p-4 rounded-lg text-blue-800 text-center">
-                  Your word to draw: <strong>{currentWord}</strong>
-                </div>
-              )}
-              {latestGuess?.isCorrect && (
-                <div className="bg-green-100 p-4 rounded-lg text-green-800 text-center animate-bounce">
-                  🎉 <strong>{latestGuess.playerName}</strong> guessed the word
-                  correctly! 🎉
-                </div>
-              )}
-              <DrawingCanvas roomId={roomId} isDrawer={isDrawer} />
-            </>
-          )}
+          {renderGameContent()}
         </div>
         <div className="space-y-4">
           <PlayersList players={players} />

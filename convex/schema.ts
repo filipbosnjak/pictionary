@@ -14,7 +14,7 @@ export default defineSchema({
       score: v.number(),
       lastSeen: v.optional(v.number()),
     })),
-    status: v.string(), // "waiting" | "playing" | "finished"
+    status: v.union(v.literal("waiting"), v.literal("playing"), v.literal("transitioning"), v.literal("finished")),
     createdAt: v.number(),
   }).index("by_custom_id", ["customId"]),
   drawings: defineTable({

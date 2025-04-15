@@ -200,6 +200,7 @@ export const nextRound = internalMutation({
     await ctx.db.patch(roomId, {
       currentDrawer: nextDrawer,
       currentWord: randomWord,
+      status: "playing",
     });
 
     // Clear the drawing

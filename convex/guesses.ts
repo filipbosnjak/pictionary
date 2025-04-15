@@ -15,6 +15,7 @@ export const submitGuess = mutation({
     
     const isCorrect = room.currentWord?.toLowerCase() === guess.toLowerCase();
     
+    // Record the guess
     await ctx.db.insert("guesses", {
       roomId,
       playerId,
@@ -31,13 +32,15 @@ export const submitGuess = mutation({
           ? { ...player, score: player.score + 100 }
           : player
       );
-      await ctx.db.patch(roomId, { players: updatedPlayers });
 
-      // Wait for 2 seconds to show celebration
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Update room with new scores and mark it as transitioning
+      await ctx.db.patch(roomId, { 
+        players: updatedPlayers,
+        status: "transitioning" // Add a transitioning state
+      });
 
-      // Start next round
-      await ctx.scheduler.runAfter(0, internal.rooms.nextRound, { roomId });
+      // Schedule the next round after a delay
+      await ctx.scheduler.runAfter(2000, internal.rooms.nextRound, { roomId });
     }
 
     return isCorrect;
